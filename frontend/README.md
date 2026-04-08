@@ -1,5 +1,15 @@
-# Vue 3 + TypeScript + Vite
+# 樂活五線譜 - 前端
 
-This template should help get you started developing with Vue 3 and TypeScript in Vite. The template uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.
+此為樂活五線譜 (LOHAS) 專案之前端，使用 Vue 3 + TypeScript + Vite。前端負責顯示互動介面、接收股票代號與區間，並向後端 API 取得樂活五線譜資料後以 eCharts 繪圖。
 
-Learn more about the recommended Project Setup and IDE Support in the [Vue Docs TypeScript Guide](https://vuejs.org/guide/typescript/overview.html#project-setup).
+快速啟動：
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+若要連同後端一起啟動，請回到專案根目錄使用 `./scripts/dev.sh`。
+
+更多資訊請參考專案根目錄的 README。
