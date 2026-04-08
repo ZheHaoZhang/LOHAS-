@@ -1,9 +1,30 @@
 from __future__ import annotations
 
+import os
+
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 
 from .lohas import DisplayRange, LohasDataError, get_lohas_data
+
+
+def get_allowed_origins() -> list[str]:
+    origins = {
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+    }
+
+    frontend_url = os.getenv("FRONTEND_URL", "").strip().rstrip("/")
+    if frontend_url:
+        origins.add(frontend_url)
+
+    vercel_url = os.getenv("VERCEL_URL", "").strip().rstrip("/")
+    if vercel_url:
+        origin = vercel_url if vercel_url.startswith("http") else f"https://{vercel_url}"
+        origins.add(origin)
+
+    return sorted(origins)
+
 
 app = FastAPI(
     title="LOHAS Five-Line API",
@@ -13,10 +34,7 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-    ],
+    allow_origins=get_allowed_origins(),
     allow_origin_regex=r"https?://(localhost|127\.0\.0\.1)(:\d+)?$",
     allow_credentials=False,
     allow_methods=["*"],
@@ -24,12 +42,14 @@ app.add_middleware(
 )
 
 
+@app.get("/health")
 @app.get("/api/health")
-def get_health() -> dict[str, str]:
+def get_health_root() -> dict[str, str]:
     return {"status": "ok"}
 
 
 @app.get("/api/lohas")
+@app.get("/lohas")
 def get_lohas(
     symbol: str = Query(..., min_length=1, description="yfinance 股票代號"),
     range: DisplayRange = Query(
