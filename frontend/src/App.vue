@@ -2,8 +2,13 @@
 import { computed, onMounted, ref } from 'vue'
 
 import LohasChart from './components/LohasChart.vue'
+import { useSearchHistory } from './composables/useSearchHistory'
+import { useTheme } from './composables/useTheme'
 import { fetchLohasData } from './lib/api'
 import type { DisplayRange, LohasResponse } from './types'
+
+const { theme, toggleTheme } = useTheme()
+const { addToHistory, removeFromHistory, getSuggestions } = useSearchHistory()
 
 interface RangeOption {
   label: string
@@ -34,7 +39,10 @@ const selectedRange = ref<DisplayRange>('3.5y')
 const chartData = ref<LohasResponse | null>(null)
 const isLoading = ref(false)
 const errorMessage = ref('')
+const showSuggestions = ref(false)
 let activeRequestId = 0
+
+const suggestions = computed(() => getSuggestions(symbolInput.value))
 
 const latestPoint = computed(() => chartData.value?.points.at(-1) ?? null)
 const activeRangeLabel = computed(
@@ -84,6 +92,7 @@ async function loadData(symbol = symbolInput.value, range = selectedRange.value)
     }
 
     chartData.value = data
+    addToHistory(normalizedSymbol)
   } catch (error) {
     if (requestId !== activeRequestId) {
       return
@@ -100,6 +109,7 @@ async function loadData(symbol = symbolInput.value, range = selectedRange.value)
 }
 
 function submitSearch(): void {
+  showSuggestions.value = false
   void loadData(symbolInput.value, selectedRange.value)
 }
 
@@ -111,6 +121,22 @@ function switchRange(range: DisplayRange): void {
   void loadData(symbolInput.value, range)
 }
 
+function onInputFocus(): void {
+  showSuggestions.value = true
+}
+
+function onInputBlur(): void {
+  setTimeout(() => {
+    showSuggestions.value = false
+  }, 150)
+}
+
+function selectSuggestion(symbol: string): void {
+  symbolInput.value = symbol
+  showSuggestions.value = false
+  void loadData(symbol, selectedRange.value)
+}
+
 onMounted(() => {
   void loadData()
 })
@@ -119,6 +145,22 @@ onMounted(() => {
 <template>
   <main class="page-shell">
     <section class="hero-card">
+      <button class="theme-toggle" type="button" :aria-label="theme === 'dark' ? '切換為日間模式' : '切換為夜間模式'" @click="toggleTheme">
+        <svg v-if="theme === 'dark'" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="5" />
+          <line x1="12" y1="1" x2="12" y2="3" />
+          <line x1="12" y1="21" x2="12" y2="23" />
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+          <line x1="1" y1="12" x2="3" y2="12" />
+          <line x1="21" y1="12" x2="23" y2="12" />
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+        </svg>
+        <svg v-else xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+        </svg>
+      </button>
       <div class="hero-copy">
         <p class="eyebrow">Vue + yfinance 樂活五線譜</p>
         <h1>輸入股票代號，快速查看均值回歸區間</h1>
@@ -130,13 +172,35 @@ onMounted(() => {
       <form class="search-panel" @submit.prevent="submitSearch">
         <label class="input-group" for="stock-symbol">
           <span>股票代號</span>
-          <input
-            id="stock-symbol"
-            v-model="symbolInput"
-            type="text"
-            inputmode="text"
-            placeholder="例如 SPY、2330.TW、AAPL"
-          />
+          <div class="input-wrapper">
+            <input
+              id="stock-symbol"
+              v-model="symbolInput"
+              type="text"
+              inputmode="text"
+              placeholder="例如 SPY、2330.TW、AAPL"
+              autocomplete="off"
+              @focus="onInputFocus"
+              @blur="onInputBlur"
+            />
+            <ul v-if="showSuggestions && suggestions.length" class="suggestions-dropdown" role="listbox" aria-label="近期查詢">
+              <li
+                v-for="symbol in suggestions"
+                :key="symbol"
+                class="suggestion-item"
+                role="option"
+                @mousedown.prevent="selectSuggestion(symbol)"
+              >
+                <span>{{ symbol }}</span>
+                <button
+                  type="button"
+                  class="suggestion-remove"
+                  aria-label="`移除 ${symbol}`"
+                  @mousedown.prevent.stop="removeFromHistory(symbol)"
+                >×</button>
+              </li>
+            </ul>
+          </div>
         </label>
 
         <button class="primary-button" type="submit" :disabled="isLoading">
