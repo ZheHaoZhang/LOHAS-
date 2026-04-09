@@ -2,12 +2,15 @@
 import { computed, onMounted, ref } from 'vue'
 
 import LohasChart from './components/LohasChart.vue'
+import { useIosHomeScreenPrompt } from './composables/useIosHomeScreenPrompt'
 import { useSearchHistory } from './composables/useSearchHistory'
 import { useTheme } from './composables/useTheme'
 import { fetchLohasData } from './lib/api'
 import type { DisplayRange, LohasResponse } from './types'
 
 const { theme, toggleTheme } = useTheme()
+const { shouldShowPrompt: showIosHomeScreenPrompt, dismissPrompt: dismissIosHomeScreenPrompt } =
+  useIosHomeScreenPrompt()
 const { addToHistory, removeFromHistory, getSuggestions } = useSearchHistory()
 
 interface RangeOption {
@@ -168,6 +171,16 @@ onMounted(() => {
           以時間和股價做 OLS 線性回歸，先算出趨勢線，再用殘差標準差畫出五條彼此平行的直線。
         </p>
       </div>
+
+      <aside v-if="showIosHomeScreenPrompt" class="ios-install-banner" aria-live="polite">
+        <div class="ios-install-copy">
+          <strong>可加入主畫面快速開啟</strong>
+          <p>若想用接近 App 的全螢幕體驗，請改用 Safari 的分享選單，點選「加入主畫面」。</p>
+        </div>
+        <button class="ios-install-dismiss" type="button" @click="dismissIosHomeScreenPrompt">
+          知道了
+        </button>
+      </aside>
 
       <form class="search-panel" @submit.prevent="submitSearch">
         <label class="input-group" for="stock-symbol">

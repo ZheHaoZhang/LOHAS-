@@ -1,7 +1,8 @@
 /* ─── Design tokens ──────────────────────────────────────── */
 :root {
+  --bg-page-color: #f8fbff;
   /* Base layered background with subtle bottom-centered color halos */
-  --bg-page: radial-gradient(circle at top, rgba(59, 130, 246, 0.16), transparent 28%),
+  --bg-page-image: radial-gradient(circle at top, rgba(59, 130, 246, 0.16), transparent 28%),
     linear-gradient(180deg, #f8fbff 0%, #eef4ff 100%),
     radial-gradient(60% 38% at 50% 88%, rgba(99, 102, 241, 0.06), transparent 18%),
     radial-gradient(28% 12% at 20% 94%, rgba(236, 72, 153, 0.03), transparent 8%);
@@ -42,10 +43,19 @@
   --color-dropdown-text: #0f172a;
   --color-dropdown-remove: #94a3b8;
   --color-dropdown-remove-hover: #ef4444;
+  --color-install-banner-bg: rgba(37, 99, 235, 0.08);
+  --color-install-banner-border: rgba(37, 99, 235, 0.16);
+  --color-install-banner-title: #1d4ed8;
+  --color-install-banner-text: #475569;
+  --color-install-banner-button-bg: rgba(255, 255, 255, 0.72);
+  --color-install-banner-button-border: rgba(148, 163, 184, 0.28);
+  --color-install-banner-button-text: #1e293b;
+  color-scheme: light;
 }
 
 [data-theme='dark'] {
-  --bg-page: radial-gradient(circle at top, rgba(59, 130, 246, 0.07), transparent 28%),
+  --bg-page-color: #0a1020;
+  --bg-page-image: radial-gradient(circle at top, rgba(59, 130, 246, 0.07), transparent 28%),
     linear-gradient(180deg, #0a1020 0%, #0d1526 100%),
     radial-gradient(60% 38% at 50% 88%, rgba(59, 130, 246, 0.04), transparent 18%),
     radial-gradient(30% 12% at 30% 94%, rgba(99, 102, 241, 0.02), transparent 8%);
@@ -85,6 +95,14 @@
   --color-dropdown-text: #f1f5f9;
   --color-dropdown-remove: #64748b;
   --color-dropdown-remove-hover: #f87171;
+  --color-install-banner-bg: rgba(37, 99, 235, 0.14);
+  --color-install-banner-border: rgba(96, 165, 250, 0.18);
+  --color-install-banner-title: #dbeafe;
+  --color-install-banner-text: #cbd5e1;
+  --color-install-banner-button-bg: rgba(15, 23, 42, 0.52);
+  --color-install-banner-button-border: rgba(148, 163, 184, 0.14);
+  --color-install-banner-button-text: #f8fafc;
+  color-scheme: dark;
 }
 
 /* ─── Base ───────────────────────────────────────────────── */
@@ -112,10 +130,12 @@
 
 html {
   color: var(--color-text);
-  background: var(--bg-page);
+  background-color: var(--bg-page-color);
+  background-image: var(--bg-page-image);
   transition:
     color 0.2s ease,
-    background 0.3s ease;
+    background-color 0.3s ease,
+    background-image 0.3s ease;
 }
 
 body {
@@ -123,8 +143,11 @@ body {
   min-width: 320px;
   min-height: 100vh;
   /* Extend background under notch/status-bar */
-  background: var(--bg-page);
-  transition: background 0.3s ease;
+  background-color: var(--bg-page-color);
+  background-image: var(--bg-page-image);
+  transition:
+    background-color 0.3s ease,
+    background-image 0.3s ease;
   position: relative;
   overflow-x: hidden;
 }
@@ -428,6 +451,56 @@ p {
   transition: color 0.2s ease;
 }
 
+/* ─── iOS install prompt ───────────────────────────────────── */
+.ios-install-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 18px;
+  border-radius: 20px;
+  background: var(--color-install-banner-bg);
+  border: 1px solid var(--color-install-banner-border);
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.ios-install-copy {
+  display: grid;
+  gap: 4px;
+}
+
+.ios-install-copy strong {
+  color: var(--color-install-banner-title);
+  font-size: 0.98rem;
+}
+
+.ios-install-copy p {
+  color: var(--color-install-banner-text);
+  font-size: 0.94rem;
+}
+
+.ios-install-dismiss {
+  flex: none;
+  padding: 10px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--color-install-banner-button-border);
+  background: var(--color-install-banner-button-bg);
+  color: var(--color-install-banner-button-text);
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    transform 0.18s ease,
+    background 0.18s ease,
+    border-color 0.18s ease,
+    color 0.18s ease;
+}
+
+.ios-install-dismiss:hover {
+  transform: translateY(-1px);
+}
+
 /* ─── Summary grid ───────────────────────────────────────── */
 .summary-grid {
   display: grid;
@@ -553,6 +626,15 @@ p {
   }
 
   .primary-button {
+    width: 100%;
+  }
+
+  .ios-install-banner {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .ios-install-dismiss {
     width: 100%;
   }
 }
