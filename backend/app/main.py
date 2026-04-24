@@ -59,7 +59,10 @@ def get_lohas(
     ),
 ) -> dict[str, object]:
     try:
-        return get_lohas_data(symbol=symbol, display_range=range)
+        return get_lohas_data(
+            symbol=symbol,
+            display_range=range,
+        )
     except LohasDataError as exc:
         raise HTTPException(status_code=exc.status_code, detail=str(exc)) from exc
     except ValueError as exc:

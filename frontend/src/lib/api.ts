@@ -1,4 +1,4 @@
-import type { DisplayRange, LohasResponse } from '../types'
+import type { DisplayRange, LohasBundleResponse } from '../types'
 
 const configuredBaseUrl = (import.meta.env.VITE_API_BASE_URL ?? '').trim().replace(/\/$/, '')
 
@@ -9,7 +9,7 @@ function buildApiUrl(path: string): string {
 export async function fetchLohasData(
   symbol: string,
   range: DisplayRange,
-): Promise<LohasResponse> {
+): Promise<LohasBundleResponse> {
   const params = new URLSearchParams({
     symbol,
     range,
@@ -25,5 +25,5 @@ export async function fetchLohasData(
     throw new Error(message)
   }
 
-  return (await response.json()) as LohasResponse
+  return (await response.json()) as LohasBundleResponse
 }
