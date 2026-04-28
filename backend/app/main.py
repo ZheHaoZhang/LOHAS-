@@ -51,7 +51,11 @@ def get_health_root() -> dict[str, str]:
 @app.get("/api/lohas")
 @app.get("/lohas")
 def get_lohas(
-    symbol: str = Query(..., min_length=1, description="yfinance 股票代號"),
+    symbol: str = Query(
+        ...,
+        min_length=1,
+        description="yfinance 股票代號；台股輸入 2330、00757、006208 時會自動補成 .TW",
+    ),
     range: DisplayRange = Query(
         "3.5y",
         alias="range",

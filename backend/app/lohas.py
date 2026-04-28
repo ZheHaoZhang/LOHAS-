@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
+import re
 from typing import Literal
 
 import numpy as np
@@ -36,6 +37,8 @@ ANALYSIS_MODE_LABELS: dict[AnalysisMode, str] = {
 MIN_REQUIRED_POINTS = 30
 CHANNEL_WINDOW_WEEKS = 20
 CHANNEL_STD_MULTIPLIER = 2
+TAIWAN_STOCK_SUFFIX = ".TW"
+TAIWAN_STOCK_CODE_PATTERN = re.compile(r"^\d{4,6}$")
 
 
 class LohasDataError(Exception):
@@ -46,12 +49,12 @@ class LohasDataError(Exception):
 
 def get_lohas_data(symbol: str, display_range: DisplayRange) -> dict[str, object]:
     normalized_symbol = normalize_symbol(symbol)
-    history = download_history(normalized_symbol, display_range)
-    five_lines = build_five_lines_response(normalized_symbol, display_range, history)
-    channel = build_channel_response(normalized_symbol, display_range, history)
+    resolved_symbol, history = resolve_history(normalized_symbol, display_range)
+    five_lines = build_five_lines_response(resolved_symbol, display_range, history)
+    channel = build_channel_response(resolved_symbol, display_range, history)
 
     return {
-        "symbol": normalized_symbol,
+        "symbol": resolved_symbol,
         "displayRange": display_range,
         "displayRangeLabel": DISPLAY_RANGE_LABELS[display_range],
         "analyses": {
@@ -165,8 +168,33 @@ def build_channel_response(
 def normalize_symbol(symbol: str) -> str:
     normalized_symbol = symbol.strip().upper()
     if not normalized_symbol:
-        raise ValueError("請輸入股票代號，例如 2330.TW 或 AAPL。")
+        raise ValueError("請輸入股票代號，例如台股 2330 或美股 AAPL。")
     return normalized_symbol
+
+
+def resolve_history(symbol: str, display_range: DisplayRange) -> tuple[str, pd.DataFrame]:
+    candidates = build_symbol_candidates(symbol)
+
+    for index, candidate in enumerate(candidates):
+        try:
+            return candidate, download_history(candidate, display_range)
+        except LohasDataError as exc:
+            has_fallback = index < len(candidates) - 1
+            if has_fallback and exc.status_code == 404:
+                continue
+            raise
+
+    raise LohasDataError("找不到這個股票代號的歷史資料。", status_code=404)
+
+
+def build_symbol_candidates(symbol: str) -> list[str]:
+    if is_taiwan_stock_candidate(symbol):
+        return [symbol, f"{symbol}{TAIWAN_STOCK_SUFFIX}"]
+    return [symbol]
+
+
+def is_taiwan_stock_candidate(symbol: str) -> bool:
+    return "." not in symbol and TAIWAN_STOCK_CODE_PATTERN.fullmatch(symbol) is not None
 
 
 def download_history(symbol: str, display_range: DisplayRange) -> pd.DataFrame:

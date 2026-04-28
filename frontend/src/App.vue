@@ -206,7 +206,7 @@ async function loadData(
 
   if (!normalizedSymbol) {
     chartData.value = null
-    errorMessage.value = '請輸入股票代號，例如 2330.TW 或 AAPL。'
+    errorMessage.value = '請輸入股票代號，例如台股 2330 或美股 AAPL。'
     return
   }
 
@@ -224,7 +224,8 @@ async function loadData(
     }
 
     chartData.value = data
-    addToHistory(normalizedSymbol)
+    symbolInput.value = data.symbol
+    addToHistory(data.symbol)
   } catch (error) {
     if (requestId !== activeRequestId) {
       return
@@ -356,7 +357,7 @@ onBeforeUnmount(() => {
               v-model="symbolInput"
               type="text"
               inputmode="text"
-              placeholder="例如 SPY、2330.TW、AAPL"
+              placeholder="例如 SPY、2330、00757、AAPL"
               autocomplete="off"
               @focus="onInputFocus"
               @blur="onInputBlur"
@@ -401,7 +402,7 @@ onBeforeUnmount(() => {
       </div>
 
       <p class="helper-text">
-        yfinance 股票代號格式，例如美股 <strong>SPY</strong>、台股 <strong>2330.TW</strong>；切換模式後會沿用同一檔標的與期間重新分析。
+        yfinance 股票代號格式，例如美股 <strong>SPY</strong>；台股可直接輸入 <strong>2330</strong>、<strong>00757</strong>、<strong>006208</strong> 這類純數字代號，系統會自動補成 <strong>.TW</strong> 再分析。
       </p>
     </section>
 
